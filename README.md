@@ -17,9 +17,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/client-tab.png" alt="Client Deployment Tab" width="48%" />
+  <img src="docs/screenshots/client-tab.png?v=2" alt="Client Deployment Tab" width="48%" />
   &nbsp;
-  <img src="docs/screenshots/server-tab.png" alt="Server Management Tab" width="48%" />
+  <img src="docs/screenshots/server-tab.png?v=2" alt="Server Management Tab" width="48%" />
 </p>
 
 ---
