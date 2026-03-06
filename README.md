@@ -5,7 +5,7 @@
 <h1 align="center">AOVPN Dashboard</h1>
 
 <p align="center">
-  A modern desktop application for managing Windows Always On VPN — built with Tauri, React & Rust.
+  A modern desktop application for managing Windows Always On VPN — built with Tauri, React &amp; Rust.
 </p>
 
 <p align="center">
@@ -35,22 +35,36 @@
 ## Features
 
 ### 🖥️ Client Deployment
+
 - **Device Tunnel** — Provisions a pre-logon IKEv2 machine tunnel (SYSTEM context) via WMI/MDM bridge
+  - Optional **Always On** toggle for Device Tunnel (default: enabled)
+  - Optional **Internal Ping Target** — specify an internal IP or hostname to use for trusted network detection instead of the DNS suffix (fixes false-positive detection on publicly routable domains)
 - **User Tunnel** — Deploys SSTP or IKEv2 user tunnel upon login for full intranet access
-- **Routing Controls** — Force tunneling, disable class-based routes, trusted network detection
+  - Configurable protocol (SSTP / IKEv2 / Automatic) and Always On toggle
+- **Routing Controls** — Force tunneling, disable class-based routes, split routing
+- **Trusted Network Detection** — Auto-suppresses VPN when on the corporate network
+- **Auto-Connect Task** — Optional Windows Scheduled Task for Device Tunnel reconnect on startup (useful for older Windows 10 clients; not required on Windows 11 Enterprise which handles this natively)
 - **Import / Export** — Save and load VPN configurations as `.json` files
 
 ### 🏢 Server Management
+
 - **Role Installation** — Check status and install RRAS, NPS, and IIS directly from the app
-- **Step-by-Step Guides** — Built-in configuration guides for RRAS, NPS, Certificate Authority, Active Directory GPO, and CRL/CDP setup
+- **Step-by-Step Guides** — Detailed built-in configuration guides with explanations for:
+  - RRAS (VPN server setup, ports, certificates, IP pools)
+  - NPS (RADIUS client, connection request & network policies, policy order)
+  - Certificate Authority (server, device and user cert templates, enrollment, chain validation)
+  - Active Directory & GPO (security groups, autoenrollment, Root CA deployment)
+  - CRL / CDP via IIS (HTTP distribution, Delta CRL, AIA extension, testing)
 
 ### 🛠️ Diagnostics
+
 - **Connection checks** — View active VPNs, routing tables, DNS & port availability
 - **Certificate verification** — Validates Root CA, User, and Machine certificates
 - **EAP XML extraction** — Extract and format EAP configuration from existing VPN profiles
 - **MMC shortcuts** — Quick launch `certlm.msc`, `certmgr.msc`, `certsrv.msc`, `certtmpl.msc`
 
 ### 🌍 Dual Language
+
 - Full English and German interface — toggle with one click
 
 ---
@@ -82,8 +96,8 @@
 │  └──────────────┘  └──────────────────────────┘ │
 │  ┌─────────────────────────────────────────────┐ │
 │  │             vpn_deploy.rs                   │ │
-│  │  (EAP XML generation, WMI deployment,      │ │
-│  │   Scheduled Tasks for SYSTEM context)       │ │
+│  │  (EAP XML generation, WMI deployment,       │ │
+│  │   Scheduled Tasks for SYSTEM context)        │ │
 │  └─────────────────────────────────────────────┘ │
 └──────────────────────┬──────────────────────────┘
                        │ PowerShell / WMI
@@ -95,6 +109,8 @@
 ```
 
 The backend generates EAP XML on-the-fly and uses `MDM_VPNv2_01` WMI bridging to deploy VPN profiles natively. For Device Tunnel operations that require SYSTEM privileges, the app creates temporary Scheduled Tasks running as `S-1-5-18` (SYSTEM) and cleans them up after execution.
+
+For Device Tunnel removal, the app performs a single atomic SYSTEM-context operation: disconnect → wait → remove WMI profile → remove phonebook entry, preventing AlwaysOn from reconnecting between steps.
 
 ---
 
@@ -122,8 +138,10 @@ npm install
 npm run tauri dev
 
 # 4. Build for release (creates .exe in src-tauri/target/release)
-npm run tauri build
+npx tauri build
 ```
+
+> **Note:** The `npm run tauri` shorthand is not available — always use `npx tauri build` or `npx tauri dev`.
 
 ---
 
@@ -150,6 +168,7 @@ aovpn/
 │
 ├── docs/                       # Documentation
 │   ├── Architecture.md         # Architecture & folder structure details
+│   ├── Build_and_Git_Guide.md  # Build, development and Git workflow
 │   └── Security.md             # Security considerations & guidelines
 │
 ├── package.json                # NPM config & scripts
@@ -159,18 +178,28 @@ aovpn/
 
 ---
 
-## Documentation
+## Configuration Fields Reference
 
-- [Architecture & Folder Structure](docs/Architecture.md) — Detailed technical overview
-- [Security Guidelines](docs/Security.md) — Input sanitization, privilege escalation, PKI considerations
+| Field | Description |
+|-------|-------------|
+| `companyPrefix` | Profile name prefix (e.g. `MyCompany` → `MyCompany Device Tunnel`) |
+| `vpnServerAddress` | External FQDN of the VPN server (e.g. `vpn.company.com`) |
+| `dnsSuffix` | Internal DNS suffix for split DNS (e.g. `corp.company.com`) |
+| `trustedNetwork` | Domain suffix for TrustedNetworkDetection in VPN profile XML |
+| `internalPingTarget` | Optional: IP or internal hostname to ping for trusted network check in the scheduled task. Leave empty to fall back to `dnsSuffix`. Use this if your domain is publicly routable. |
+| `dnsServers` | Internal DNS server IPs (comma-separated) |
+| `deviceTunnelAlwaysOn` | Whether Device Tunnel uses `<AlwaysOn>true</AlwaysOn>` in the XML profile |
+| `enableTaskSchedulerTrigger` | Deploy an auto-connect scheduled task (legacy workaround, not needed on Win11 Enterprise) |
+| `userTunnelAlwaysOn` | Whether User Tunnel uses Always On |
+| `forceTunneling` | Route all traffic through VPN (`ForceTunnel` routing policy) |
 
 ---
 
-## Future Improvements
+## Documentation
 
-- Split `App.tsx` into smaller, reusable React components
-- Add automated tests (unit + integration)
-- Add screenshots and demo GIFs to this README
+- [Architecture & Folder Structure](docs/Architecture.md) — Detailed technical overview
+- [Build & Git Guide](docs/Build_and_Git_Guide.md) — Build, development and Git workflow
+- [Security Guidelines](docs/Security.md) — Input sanitization, privilege escalation, PKI considerations
 
 ---
 

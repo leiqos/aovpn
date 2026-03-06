@@ -20,6 +20,8 @@ pub struct VpnConfig {
     pub disable_class_based_route: bool,
     pub disable_disconnect_button: bool,
     pub sstp_disable_revocation: bool,
+    pub internal_ping_target: String,
+    pub device_tunnel_always_on: bool,
 }
 
 /// Helper to convert a string to a UTF-16LE Base64 string for PowerShell's -EncodedCommand

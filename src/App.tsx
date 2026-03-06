@@ -19,6 +19,8 @@ interface VpnConfig {
   disableClassBasedRoute: boolean;
   disableDisconnectButton: boolean;
   sstpDisableRevocation: boolean;
+  internalPingTarget: string;
+  deviceTunnelAlwaysOn: boolean;
 }
 
 interface LogEntry {
@@ -39,13 +41,16 @@ const en = {
   serverLabel: "VPN Server FQDN",
   dnsSuffixLabel: "Internal DNS Suffix",
   trustedLabel: "Trusted Network",
+  pingTargetLabel: "Internal Ping Target",
+  tt_ping: "Optional: IP or internal DNS to ping to verify if on corporate network. Fallbacks to DNS Suffix if empty.",
   dnsServersLabel: "Internal DNS Servers",
   tunnelConstraints: "2. Routing & Rules",
   devRoutesLabel: "Device Routes",
   devTaskTrigger: "Auto-Connect Task",
   userRoutesLabel: "User Routes",
   protocolLabel: "Protocol",
-  alwaysOnLabel: "Always On Enabled",
+  alwaysOnLabel: "Always On (User)",
+  devAlwaysOnLabel: "Always On (Device)",
   advSection: "Advanced Options",
   forceTunnel: "Force Tunneling",
   disableClass: "Hide Default Routes",
@@ -121,13 +126,16 @@ const de = {
   serverLabel: "VPN Server FQDN",
   dnsSuffixLabel: "Internes DNS Suffix",
   trustedLabel: "Trusted Net",
+  pingTargetLabel: "Internes Ping Ziel",
+  tt_ping: "Optional: IP oder internes DNS zum Pingen, um Firmennetzwerk zu prüfen. Fallback auf DNS Suffix.",
   dnsServersLabel: "Interne DNS Server",
   tunnelConstraints: "2. Routing & Regeln",
   devRoutesLabel: "Device Routen",
   devTaskTrigger: "Auto-Connect Task",
   userRoutesLabel: "User Routen",
   protocolLabel: "Protokoll",
-  alwaysOnLabel: "Immer An (Always On)",
+  alwaysOnLabel: "Immer An (User)",
+  devAlwaysOnLabel: "Immer An (Device)",
   advSection: "Erweiterte Optionen",
   forceTunnel: "Force Tunneling",
   disableClass: "Standardrouten Aus",
@@ -224,7 +232,9 @@ function App() {
     forceTunneling: false,
     disableClassBasedRoute: false,
     disableDisconnectButton: false,
-    sstpDisableRevocation: false
+    sstpDisableRevocation: false,
+    internalPingTarget: "",
+    deviceTunnelAlwaysOn: true
   });
 
   const [showRrasGuide, setShowRrasGuide] = useState(false);
@@ -556,6 +566,10 @@ function App() {
                       <label title={T.tt_server}>{T.serverLabel}</label>
                       <input type="text" placeholder="e.g. vpn.example.com" value={config.vpnServerAddress} onChange={e => handleChange('vpnServerAddress', e.target.value)} title={T.tt_server} />
                     </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label>{T.trustedLabel}</label>
+                      <input type="text" placeholder="e.g. internal.local" value={config.trustedNetwork} onChange={e => handleChange('trustedNetwork', e.target.value)} />
+                    </div>
                   </div>
                   <div>
                     <div className="form-group">
@@ -563,11 +577,9 @@ function App() {
                       <input type="text" placeholder="e.g. internal.local" value={config.dnsSuffix} onChange={e => handleChange('dnsSuffix', e.target.value)} />
                     </div>
                     <div className="form-group">
-                      <label>{T.trustedLabel}</label>
-                      <input type="text" placeholder="e.g. internal.local" value={config.trustedNetwork} onChange={e => handleChange('trustedNetwork', e.target.value)} />
+                      <label title={T.tt_ping}>{T.pingTargetLabel}</label>
+                      <input type="text" placeholder="e.g. 192.168.1.10" value={config.internalPingTarget} onChange={e => handleChange('internalPingTarget', e.target.value)} title={T.tt_ping} />
                     </div>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label>{T.dnsServersLabel}</label>
                       <input type="text" placeholder="e.g. 192.168.1.10, 192.168.1.11" value={config.dnsServers} onChange={e => handleChange('dnsServers', e.target.value)} />
@@ -587,6 +599,10 @@ function App() {
                     <div className="checkbox-group">
                       <input type="checkbox" id="workaround" checked={config.enableTaskSchedulerTrigger} onChange={e => handleChange('enableTaskSchedulerTrigger', e.target.checked)} />
                       <label htmlFor="workaround">{T.devTaskTrigger}</label>
+                    </div>
+                    <div className="checkbox-group">
+                      <input type="checkbox" id="dev_always_on" checked={config.deviceTunnelAlwaysOn} onChange={e => handleChange('deviceTunnelAlwaysOn', e.target.checked)} />
+                      <label htmlFor="dev_always_on">{T.devAlwaysOnLabel}</label>
                     </div>
 
                     <div className="advanced-section" style={{ marginTop: '0.8rem', paddingTop: '0.4rem', borderTop: '1px dashed #30363d' }}>

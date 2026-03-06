@@ -32,7 +32,7 @@ pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
 {routes_xml}
   <DeviceTunnel>true</DeviceTunnel>
   <RegisterDNS>true</RegisterDNS>
-  <AlwaysOn>true</AlwaysOn>
+  <AlwaysOn>{always_on}</AlwaysOn>
   <TrustedNetworkDetection>{trusted_network}</TrustedNetworkDetection>
   <DomainNameInformation>
     <DomainName>.{dns_suffix}</DomainName>
@@ -43,6 +43,7 @@ pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
         vpn_server_address = config.vpn_server_address,
         trusted_network = config.trusted_network,
         dns_servers = config.dns_servers,
+        always_on = if config.device_tunnel_always_on { "true" } else { "false" },
     );
 
     let profile_name = format!("{} Device Tunnel", config.company_prefix);
@@ -290,34 +291,37 @@ pub async fn connect_user_tunnel(config: VpnConfig) -> Result<String, String> {
 #[command]
 pub async fn remove_device_tunnel(config: VpnConfig) -> Result<String, String> {
     let profile_name = format!("{} Device Tunnel", config.company_prefix);
-    
-    // 1. Remove the WMI Config
+
+    // Single atomic SYSTEM script: disconnect first, wait briefly, then remove WMI + phonebook.
+    // Running as one task prevents AlwaysOn from reconnecting between steps.
     let script = format!(r#"
-$profileNameEscaped = "{profile_name}".Replace(' ', '%20')
+$profileName = "{profile_name}"
+$profileNameEscaped = $profileName.Replace(' ', '%20')
 $namespace = "root\cimv2\mdm\dmmap"
 $className = "MDM_VPNv2_01"
 
+# Step 1: Disconnect
+try {{ rasdial "$profileName" /disconnect }} catch {{ }}
+Start-Sleep -Milliseconds 800
+
+# Step 2: Remove WMI profile
 $session = New-CimSession
 try {{ $instances = $session.EnumerateInstances($namespace, $className) }} catch {{ $instances = $null }}
 if ($instances) {{
     foreach ($i in $instances) {{
         if ($i.InstanceID -eq $profileNameEscaped) {{
-            $session.DeleteInstance($namespace, $i)
+            try {{ $session.DeleteInstance($namespace, $i) }} catch {{ }}
         }}
     }}
 }}
+
+# Step 3: Remove phonebook/network adapter entry
+Remove-VpnConnection -Name "$profileName" -AllUserConnection -Force -ErrorAction SilentlyContinue
+
+Write-Host "Device Tunnel removed."
 "#, profile_name = profile_name);
 
-    let _ = run_as_system_task("TempRemoveDeviceWMI", &script);
-
-    // 2. Remove the actual Network Adapter/Phonebook entry!
-    // This MUST be run as SYSTEM or it throws "Access Denied" for Global User Connections.
-    let args = format!("-Command \"Remove-VpnConnection -Name '{}' -AllUserConnection -Force -ErrorAction SilentlyContinue\"", profile_name);
-    
-    match run_cmd_as_system("TempRemoveDeviceTunnelNet", "powershell.exe", &args) {
-        Ok(_) => Ok("Device Tunnel successfully removed.".to_string()),
-        Err(e) => Err(format!("Failed to remove device tunnel network entry: {}", e))
-    }
+    run_as_system_task("TempRemoveDeviceTunnel", &script)
 }
 
 #[command]
@@ -565,9 +569,15 @@ Write-Host "Success! Profile was created."
 pub async fn enable_task_scheduler_trigger(config: VpnConfig) -> Result<String, String> {
     let vpn_name = format!("{} Device Tunnel", config.company_prefix);
     let task_name = format!("Start {} Device Tunnel", config.company_prefix);
+    let ping_target = if config.internal_ping_target.trim().is_empty() {
+        &config.dns_suffix
+    } else {
+        &config.internal_ping_target
+    };
+
     let script = format!(r#"
 $vpnName = "{vpn_name}"
-$internalDomain = "{dns_suffix}"
+$internalDomain = "{ping_target}"
 $maxRetries = 5
 $retryCount = 0
 
@@ -583,7 +593,7 @@ do {{
     Start-Sleep -Seconds 10
 }} while ($retryCount -lt $maxRetries)
 exit 1
-"#, vpn_name=vpn_name, dns_suffix=config.dns_suffix);
+"#, vpn_name=vpn_name, ping_target=ping_target);
     
     // Convert to a system Scheduled Task at Startup using the same method, but trigger is AtStartup
     // and we don't delete it immediately.
