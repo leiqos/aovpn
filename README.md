@@ -42,6 +42,7 @@
 - **User Tunnel** — Deploys SSTP or IKEv2 user tunnel upon login for full intranet access
   - Configurable protocol (SSTP / IKEv2 / Automatic) and Always On toggle
 - **Routing Controls** — Force tunneling, disable class-based routes, split routing
+- **iOS/Mac IPsec Compatibility** — Apply custom IPsec cryptography parameters to match iOS and macOS requirements
 - **Trusted Network Detection** — Auto-suppresses VPN when on the corporate network
 - **Auto-Connect Task** — Optional Windows Scheduled Task for Device Tunnel reconnect on startup (useful for older Windows 10 clients; not required on Windows 11 Enterprise which handles this natively)
 - **Import / Export** — Save and load VPN configurations as `.json` files
@@ -59,8 +60,8 @@
 ### 🛠️ Diagnostics
 
 - **Connection checks** — View active VPNs, routing tables, DNS & port availability
-- **Certificate verification** — Validates Root CA, User, and Machine certificates
-- **EAP XML extraction** — Extract and format EAP configuration from existing VPN profiles
+- **Certificate verification** — Validates and displays hashes/thumbprints for Root CA, User, and Machine certificates
+- **EAP XML extraction** — Extract and format EAP configuration from existing VPNprofiles
 - **MMC shortcuts** — Quick launch `certlm.msc`, `certmgr.msc`, `certsrv.msc`, `certtmpl.msc`
 
 ### 🌍 Dual Language

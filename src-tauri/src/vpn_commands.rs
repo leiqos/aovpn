@@ -117,13 +117,16 @@ function Format-Certs($certs) {{
         if ($issuer -match 'CN=([^,]+)') {{
             $issuer = $matches[1]
         }}
-        $formatted += "$name [Issuer: $issuer] (Expires: $($c.NotAfter.ToString('yyyy-MM-dd')))"
+        $formatted += "$name [Issuer: $issuer] (Thumbprint: $($c.Thumbprint)) (Expires: $($c.NotAfter.ToString('yyyy-MM-dd')))"
     }}
     return $formatted -join "`n  * "
 }}
 
 $res = [ordered]@{{
-    "Root CA" = if ($root) {{ "Installed: " + ($root | Select-Object -First 1).Subject }} else {{ "Missing" }}
+    "Root CA" = if ($root) {{ 
+        $r = $root | Select-Object -First 1
+        "Installed: " + $r.Subject + " (Thumbprint: " + $r.Thumbprint + ")"
+    }} else {{ "Missing" }}
     "Machine Certs" = Format-Certs $machine
     "User Certs"    = Format-Certs $user
 }}

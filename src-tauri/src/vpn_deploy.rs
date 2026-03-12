@@ -652,4 +652,23 @@ pub async fn write_file_to_path(path: String, content: String) -> Result<String,
     Ok(format!("Configuration successfully exported to: {}", path))
 }
 
+#[command]
+pub async fn configure_ipsec(config: VpnConfig) -> Result<String, String> {
+    let dev_tunnel = format!("{} Device Tunnel", config.company_prefix);
+    let user_tunnel = format!("{} User Tunnel", config.company_prefix);
+
+    let script = format!(r#"
+$devTunnel = "{dev_tunnel}"
+$userTunnel = "{user_tunnel}"
+
+Set-VpnConnectionIPsecConfiguration -ConnectionName $devTunnel -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -DHGroup Group14 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force -ErrorAction SilentlyContinue
+
+Set-VpnConnectionIPsecConfiguration -ConnectionName $userTunnel -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -DHGroup Group14 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force -ErrorAction SilentlyContinue
+
+Write-Host "IPsec configuration applied."
+"#, dev_tunnel = dev_tunnel, user_tunnel = user_tunnel);
+
+    run_as_system_task("TempConfigureIpsec", &script)
+}
+
 

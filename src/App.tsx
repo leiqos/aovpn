@@ -52,6 +52,7 @@ const en = {
   alwaysOnLabel: "Always On (User)",
   devAlwaysOnLabel: "Always On (Device)",
   advSection: "Advanced Options",
+  applyIosMac: "Apply iOS/Mac IPsec",
   forceTunnel: "Force Tunneling",
   disableClass: "Hide Default Routes",
   hideDisconnect: "Hide Disconnect UI",
@@ -137,6 +138,7 @@ const de = {
   alwaysOnLabel: "Immer An (User)",
   devAlwaysOnLabel: "Immer An (Device)",
   advSection: "Erweiterte Optionen",
+  applyIosMac: "iOS/Mac IPsec Anwenden",
   forceTunnel: "Force Tunneling",
   disableClass: "Standardrouten Aus",
   hideDisconnect: "Trennen-UI Verbergen",
@@ -642,6 +644,9 @@ function App() {
                       <input type="checkbox" id="always_on" checked={config.userTunnelAlwaysOn} onChange={e => handleChange('userTunnelAlwaysOn', e.target.checked)} />
                       <label htmlFor="always_on">{T.alwaysOnLabel}</label>
                     </div>
+                    <button className="btn btn-outline" style={{ marginTop: '1.2rem', fontSize: '0.75rem', padding: '0.3rem' }} onClick={() => callEndpoint('configure_ipsec', { config })}>
+                      {T.applyIosMac}
+                    </button>
                   </div>
                 </div>
               </div>

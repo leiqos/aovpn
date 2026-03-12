@@ -19,7 +19,7 @@ aovpn/
 │   │   ├── lib.rs              # Tauri app setup & IPC command registration
 │   │   ├── config.rs           # VpnConfig struct (shared configuration shape)
 │   │   ├── vpn_commands.rs     # Diagnostic commands (VPN status, certs, routing, ports)
-│   │   └── vpn_deploy.rs       # Deployment logic (EAP XML, WMI bridge, Scheduled Tasks)
+│   │   └── vpn_deploy.rs       # Deployment logic (EAP XML, WMI bridge, Scheduled Tasks, IPsec crypto)
 │   ├── tauri.conf.json         # Tauri project config (window size, CSP, icons)
 │   ├── capabilities/           # Tauri permission capabilities
 │   └── icons/                  # App icons (.ico, .png, .icns)

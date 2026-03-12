@@ -19,6 +19,7 @@ pub fn run() {
       vpn_deploy::enable_task_scheduler_trigger,
       vpn_deploy::set_sstp_revocation,
       vpn_deploy::write_file_to_path,
+      vpn_deploy::configure_ipsec,
       vpn_commands::get_vpn_status,
       vpn_commands::get_vpn_xml,
       vpn_commands::restart_vpn_service,
