@@ -653,22 +653,46 @@ pub async fn write_file_to_path(path: String, content: String) -> Result<String,
 }
 
 #[command]
-pub async fn configure_ipsec(config: VpnConfig) -> Result<String, String> {
+pub async fn configure_device_ipsec(config: VpnConfig) -> Result<String, String> {
     let dev_tunnel = format!("{} Device Tunnel", config.company_prefix);
+
+    let sys_script = format!(r#"
+$devTunnel = "{dev_tunnel}"
+Set-VpnConnectionIPsecConfiguration -ConnectionName $devTunnel -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -DHGroup Group14 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force -ErrorAction SilentlyContinue
+Write-Host "Device IPsec configuration applied."
+"#, dev_tunnel = dev_tunnel);
+
+    match run_as_system_task("TempConfigureDevIpsec", &sys_script) {
+        Ok(_) => Ok("Device Tunnel IPsec ciphers successfully applied.".to_string()),
+        Err(e) => Err(format!("Device Tunnel IPsec failed: {}", e)),
+    }
+}
+
+#[command]
+pub async fn configure_user_ipsec(config: VpnConfig) -> Result<String, String> {
     let user_tunnel = format!("{} User Tunnel", config.company_prefix);
 
-    let script = format!(r#"
-$devTunnel = "{dev_tunnel}"
+    let user_script = format!(r#"
 $userTunnel = "{user_tunnel}"
-
-Set-VpnConnectionIPsecConfiguration -ConnectionName $devTunnel -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -DHGroup Group14 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force -ErrorAction SilentlyContinue
-
 Set-VpnConnectionIPsecConfiguration -ConnectionName $userTunnel -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -DHGroup Group14 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force -ErrorAction SilentlyContinue
+Write-Host "User IPsec configuration applied."
+"#, user_tunnel = user_tunnel);
 
-Write-Host "IPsec configuration applied."
-"#, dev_tunnel = dev_tunnel, user_tunnel = user_tunnel);
+    let user_output = Command::new("powershell")
+        .args(&["-Command", &user_script])
+        .creation_flags(0x08000000)
+        .output();
 
-    run_as_system_task("TempConfigureIpsec", &script)
+    match user_output {
+        Ok(out) => {
+            if out.status.success() {
+                Ok("User Tunnel IPsec ciphers successfully applied.".to_string())
+            } else {
+                Err(format!("User Tunnel IPsec failed: {}", String::from_utf8_lossy(&out.stderr)))
+            }
+        },
+        Err(e) => Err(format!("Failed to execute User IPsec command: {}", e)),
+    }
 }
 
 
