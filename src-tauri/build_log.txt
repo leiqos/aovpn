@@ -1,0 +1,30 @@
+   Compiling aovpn v1.0.0 (C:\Users\qlin\Desktop\VPN_tauri\src-tauri)
+error: unknown start of token: `
+   --> src\vpn_deploy.rs:817:1
+    |
+817 | ```
+    | ^^^
+    |
+    = note: character appears 2 more times
+help: Unicode character '`' (Grave Accent) looks like ''' (Single Quote), but it is not
+    |
+817 - ```
+817 + '''
+    |
+
+warning: unused variable: `output`
+   --> src\vpn_deploy.rs:384:9
+    |
+384 |     let output = Command::new("cmd")
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_output`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `app`
+  --> src\lib.rs:39:13
+   |
+39 |     .setup(|app| {
+   |             ^^^ help: if this is intentional, prefix it with an underscore: `_app`
+
+warning: `aovpn` (lib) generated 2 warnings
+error: could not compile `aovpn` (lib) due to 1 previous error; 2 warnings emitted

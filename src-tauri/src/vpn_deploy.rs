@@ -435,6 +435,28 @@ pub async fn deploy_user_tunnel(config: VpnConfig) -> Result<String, String> {
         }
     }
 
+    let mut eku_xml = String::new();
+    if let (Some(eku_name), Some(eku_oid)) = (&config.eku_name, &config.eku_oid) {
+        if !eku_name.trim().is_empty() && !eku_oid.trim().is_empty() {
+            eku_xml = format!(r#"
+        <TLSExtensions xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">
+          <FilteringInfo xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV3">
+            <EKUMapping>
+              <EKUMap>
+                <EKUName>{}</EKUName>
+                <EKUOID>{}</EKUOID>
+              </EKUMap>
+            </EKUMapping>
+            <ClientAuthEKUList Enabled="true">
+              <EKUMapInList>
+                <EKUName>{}</EKUName>
+              </EKUMapInList>
+            </ClientAuthEKUList>
+          </FilteringInfo>
+        </TLSExtensions>"#, eku_name, eku_oid, eku_name);
+        }
+    }
+
     let eap_settings = format!(r#"
 <EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
   <EapMethod>
@@ -459,11 +481,11 @@ pub async fn deploy_user_tunnel(config: VpnConfig) -> Result<String, String> {
         </ServerValidation>
         <DifferentUsername>false</DifferentUsername>
         <PerformServerValidation xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</PerformServerValidation>
-        <AcceptServerName xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</AcceptServerName>
+        <AcceptServerName xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</AcceptServerName>{eku_xml}
       </EapType>
     </Eap>
   </Config>
-</EapHostConfig>"#, eap_server_names = config.eap_server_names, root_ca_hash = config.root_ca_hash);
+</EapHostConfig>"#, eap_server_names = config.eap_server_names, root_ca_hash = config.root_ca_hash, eku_xml = eku_xml);
 
     let routing_mode = if config.force_tunneling { "ForceTunnel" } else { "SplitTunnel" };
     let disable_btn_xml = if config.disable_disconnect_button { "  <DisableDisconnectButton>true</DisableDisconnectButton>\n" } else { "" };
@@ -567,6 +589,28 @@ Write-Host "Success! Profile was created."
 
 #[command]
 pub async fn deploy_user_tunnel_all(config: VpnConfig) -> Result<String, String> {
+    let mut eku_xml = String::new();
+    if let (Some(eku_name), Some(eku_oid)) = (&config.eku_name, &config.eku_oid) {
+        if !eku_name.trim().is_empty() && !eku_oid.trim().is_empty() {
+            eku_xml = format!(r#"
+        <TLSExtensions xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">
+          <FilteringInfo xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV3">
+            <EKUMapping>
+              <EKUMap>
+                <EKUName>{}</EKUName>
+                <EKUOID>{}</EKUOID>
+              </EKUMap>
+            </EKUMapping>
+            <ClientAuthEKUList Enabled="true">
+              <EKUMapInList>
+                <EKUName>{}</EKUName>
+              </EKUMapInList>
+            </ClientAuthEKUList>
+          </FilteringInfo>
+        </TLSExtensions>"#, eku_name, eku_oid, eku_name);
+        }
+    }
+
     let eap_settings = format!(r#"<EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
   <EapMethod>
     <Type xmlns="http://www.microsoft.com/provisioning/EapCommon">13</Type>
@@ -590,11 +634,11 @@ pub async fn deploy_user_tunnel_all(config: VpnConfig) -> Result<String, String>
         </ServerValidation>
         <DifferentUsername>false</DifferentUsername>
         <PerformServerValidation xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</PerformServerValidation>
-        <AcceptServerName xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</AcceptServerName>
+        <AcceptServerName xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</AcceptServerName>{eku_xml}
       </EapType>
     </Eap>
   </Config>
-</EapHostConfig>"#, eap_server_names = config.eap_server_names, root_ca_hash = config.root_ca_hash);
+</EapHostConfig>"#, eap_server_names = config.eap_server_names, root_ca_hash = config.root_ca_hash, eku_xml = eku_xml);
 
     let profile_name = format!("{} User Tunnel All", config.company_prefix);
     

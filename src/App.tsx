@@ -21,6 +21,8 @@ interface VpnConfig {
   sstpDisableRevocation: boolean;
   internalPingTarget: string;
   deviceTunnelAlwaysOn: boolean;
+  ekuName: string;
+  ekuOid: string;
 }
 
 interface LogEntry {
@@ -240,7 +242,9 @@ function App() {
     disableDisconnectButton: false,
     sstpDisableRevocation: false,
     internalPingTarget: "",
-    deviceTunnelAlwaysOn: true
+    deviceTunnelAlwaysOn: true,
+    ekuName: "",
+    ekuOid: ""
   });
 
   const [showRrasGuide, setShowRrasGuide] = useState(false);
@@ -697,9 +701,18 @@ function App() {
                   <label>{T.rootCALabel}</label>
                   <input type="text" className="root-ca-input" placeholder="e.g. 68b545d69b..." value={config.rootCaHash} onChange={e => handleChange('rootCaHash', e.target.value)} />
                 </div>
-                <div className="form-group" style={{ marginBottom: '0.8rem' }}>
+                <div className="form-group">
                   <label title={T.tt_eap}>{T.eapLabel}</label>
                   <input type="text" placeholder="e.g. cert.example.com" value={config.eapServerNames} onChange={e => handleChange('eapServerNames', e.target.value)} title={T.tt_eap} />
+                </div>
+                
+                <div className="form-group">
+                  <label>EKU Name (Optional)</label>
+                  <input type="text" placeholder="e.g. Mein_Firmen_VPN" value={config.ekuName} onChange={e => handleChange('ekuName', e.target.value)} title="Optional: Custom Application Policy Name" />
+                </div>
+                <div className="form-group" style={{ marginBottom: '0.8rem' }}>
+                  <label>EKU OID (Optional)</label>
+                  <input type="text" placeholder="e.g. 1.3.6.1.4.1.311.21.8..." value={config.ekuOid} onChange={e => handleChange('ekuOid', e.target.value)} title="Optional: Custom Application Policy OID" />
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>

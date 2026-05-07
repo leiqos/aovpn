@@ -22,6 +22,8 @@ pub struct VpnConfig {
     pub sstp_disable_revocation: bool,
     pub internal_ping_target: String,
     pub device_tunnel_always_on: bool,
+    pub eku_name: Option<String>,
+    pub eku_oid: Option<String>,
 }
 
 /// Helper to convert a string to a UTF-16LE Base64 string for PowerShell's -EncodedCommand
