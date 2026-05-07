@@ -34,6 +34,7 @@ const en = {
   title: "AOVPN",
   subtitle: "Enterprise Management Console",
   btnDeploy: "Run Deployment",
+  btnDeployUserAll: "Deploy User Tunnel (All)",
   btnDeploying: "Deploying...",
   clear: "Clear Log",
   coreParams: "1. Core & Network",
@@ -121,6 +122,7 @@ const de = {
   title: "AOVPN",
   subtitle: "Enterprise Management Konsole",
   btnDeploy: "Deployment Starten",
+  btnDeployUserAll: "User Tunnel (Alle) Deployen",
   btnDeploying: "Wird Deployt...",
   clear: "Log Leeren",
   coreParams: "1. Kern-Netzwerk",
@@ -407,6 +409,34 @@ function App() {
     }
   };
 
+  const deployUserAll = async () => {
+    if (isDeploying) return;
+
+    const missing: string[] = [];
+    if (!config.companyPrefix.trim()) missing.push(T.prefixLabel);
+    if (!config.vpnServerAddress.trim()) missing.push(T.serverLabel);
+    if (!config.dnsSuffix.trim()) missing.push(T.dnsSuffixLabel);
+    if (!config.rootCaHash.trim()) missing.push(T.rootCALabel);
+    if (!config.eapServerNames.trim()) missing.push(T.eapLabel);
+    if (missing.length > 0) {
+      window.alert(`${lang === 'de' ? 'Fehlende Pflichtfelder' : 'Missing required fields'}:\n\n• ${missing.join('\n• ')}`);
+      return;
+    }
+
+    setIsDeploying(true);
+    setLogs([]);
+    addLog('SYSTEM', 'Starting Global User Tunnel Deployment...', false);
+
+    try {
+      await callEndpoint('deploy_user_tunnel_all', { config });
+      addLog('SYSTEM', '✅ Global User Tunnel Deployment completed successfully!', false);
+    } catch (e) {
+      addLog('SYSTEM', '❌ Deployment halted due to errors.', true);
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   const exportConfig = async () => {
     try {
       const { save } = await import('@tauri-apps/plugin-dialog');
@@ -545,6 +575,9 @@ function App() {
             </button>
             <button className="btn btn-outline" style={{ width: 'auto', padding: '0.2rem 0.4rem', fontSize: '0.75rem' }} onClick={toggleLang}>
               {lang === 'de' ? '🇺🇸 EN' : '🇩🇪 DE'}
+            </button>
+            <button className="btn btn-outline" disabled={isDeploying} onClick={deployUserAll} style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: '#58a6ff', borderColor: '#58a6ff' }}>
+              👥 {T.btnDeployUserAll}
             </button>
             <button className="btn btn-success" disabled={isDeploying} onClick={deployAll} style={{ width: '260px', padding: '0.4rem 0.8rem', fontSize: '0.9rem', justifyContent: 'center' }}>
               🚀 {isDeploying ? T.btnDeploying : T.btnDeploy}

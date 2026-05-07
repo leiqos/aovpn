@@ -16,6 +16,7 @@ pub fn run() {
       vpn_deploy::open_msc,
       vpn_deploy::get_sstp_revocation_status,
       vpn_deploy::deploy_user_tunnel,
+      vpn_deploy::deploy_user_tunnel_all,
       vpn_deploy::enable_task_scheduler_trigger,
       vpn_deploy::set_sstp_revocation,
       vpn_deploy::write_file_to_path,

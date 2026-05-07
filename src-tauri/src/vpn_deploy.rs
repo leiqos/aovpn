@@ -566,6 +566,91 @@ Write-Host "Success! Profile was created."
 }
 
 #[command]
+pub async fn deploy_user_tunnel_all(config: VpnConfig) -> Result<String, String> {
+    let eap_settings = format!(r#"<EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+  <EapMethod>
+    <Type xmlns="http://www.microsoft.com/provisioning/EapCommon">13</Type>
+    <VendorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorId>
+    <VendorType xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorType>
+    <AuthorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</AuthorId>
+  </EapMethod>
+  <Config xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+    <Eap xmlns="http://www.microsoft.com/provisioning/BaseEapConnectionPropertiesV1">
+      <Type>13</Type>
+      <EapType xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV1">
+        <CredentialsSource>
+          <CertificateStore>
+            <SimpleCertSelection>true</SimpleCertSelection>
+          </CertificateStore>
+        </CredentialsSource>
+        <ServerValidation>
+          <DisableUserPromptForServerValidation>true</DisableUserPromptForServerValidation>
+          <ServerNames>{eap_server_names}</ServerNames>
+          <TrustedRootCA>{root_ca_hash}</TrustedRootCA>
+        </ServerValidation>
+        <DifferentUsername>false</DifferentUsername>
+        <PerformServerValidation xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</PerformServerValidation>
+        <AcceptServerName xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</AcceptServerName>
+      </EapType>
+    </Eap>
+  </Config>
+</EapHostConfig>"#, eap_server_names = config.eap_server_names, root_ca_hash = config.root_ca_hash);
+
+    let profile_name = format!("{} User Tunnel All", config.company_prefix);
+    
+    let mut routes_script = String::new();
+    for route in &config.user_routes {
+        if let Some((addr, prefix)) = route.split_once('/') {
+            routes_script.push_str(&format!(
+                "Add-VpnConnectionRoute -ConnectionName \"{profile_name}\" -DestinationPrefix \"{addr}/{prefix}\" -PassThru\n",
+                profile_name = profile_name, addr = addr, prefix = prefix
+            ));
+        }
+    }
+
+    let protocol_ps = if config.user_tunnel_protocol.to_lowercase() == "automatic" {
+        "Automatic"
+    } else {
+        &config.user_tunnel_protocol
+    };
+    
+    let split_tunnel_flag = if config.force_tunneling { "$false" } else { "$true" };
+
+    let script = format!(r#"
+$ErrorActionPreference = "Stop"
+$vpnName = "{profile_name}"
+$server = "{vpn_server_address}"
+$protocol = "{protocol}"
+$eapXml = @"
+{eap_settings}
+"@
+
+Remove-VpnConnection -Name $vpnName -AllUserConnection -Force -ErrorAction SilentlyContinue | Out-Null
+Remove-VpnConnection -Name $vpnName -Force -ErrorAction SilentlyContinue | Out-Null
+
+Write-Host "Creating VPN Connection '$vpnName' for All Users..."
+Add-VpnConnection -Name $vpnName -ServerAddress $server -TunnelType $protocol -AuthenticationMethod Eap -AllUserConnection -Force
+Set-VpnConnection -Name $vpnName -AllUserConnection -EapConfigXmlStream ([xml]$eapXml) -Force
+
+Set-VpnConnection -Name $vpnName -AllUserConnection -SplitTunneling {split_tunnel} -Force
+
+{routes_script}
+
+Write-Host "Success! User Tunnel (All Users) was created."
+"#,
+        profile_name = profile_name,
+        vpn_server_address = config.vpn_server_address,
+        protocol = protocol_ps,
+        eap_settings = eap_settings,
+        split_tunnel = split_tunnel_flag,
+        routes_script = routes_script
+    );
+
+    // Creates the connection system-wide via an elevated system task
+    run_as_system_task("TempDeployUserTunnelAll", &script)
+}
+
+#[command]
 pub async fn enable_task_scheduler_trigger(config: VpnConfig) -> Result<String, String> {
     let vpn_name = format!("{} Device Tunnel", config.company_prefix);
     let task_name = format!("Start {} Device Tunnel", config.company_prefix);
