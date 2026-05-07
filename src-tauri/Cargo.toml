@@ -1,6 +1,6 @@
 [package]
 name = "aovpn"
-version = "1.0.0"
+version = "1.4.0"
 description = "A Tauri-based desktop application for managing Windows Always On VPN configurations"
 authors = ["leiqos"]
 license = "MIT"
