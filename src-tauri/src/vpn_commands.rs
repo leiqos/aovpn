@@ -20,37 +20,47 @@ pub async fn get_vpn_status() -> Result<String, String> {
 #[command]
 pub async fn get_vpn_xml(name: &str) -> Result<String, String> {
     let script = format!(r#"
-$conns = @()
-$d = Get-VpnConnection -AllUserConnection -ErrorAction SilentlyContinue | Where-Object {{ $_.Name -match "{name}" }}
-if ($d) {{ $conns += $d }}
-$u = Get-VpnConnection -ErrorAction SilentlyContinue | Where-Object {{ $_.Name -match "{name}" }}
-if ($u) {{ $conns += $u }}
-$conn = $conns | Select-Object -First 1
-if (-not $conn) {{
-    "Keine VPN-Verbindung mit dem Namen '*{name}*' gefunden."
-}} else {{
-    [xml]$xml = $null
-    try {{
-        if ($conn.EapConfigXmlStream.InnerXml) {{
-            $xml = [xml]$conn.EapConfigXmlStream.InnerXml
-        }} elseif ($conn.ProfileXML) {{
-            $xml = [xml]$conn.ProfileXML
-        }}
-    }} catch {{
-        "Error parsing XML."
-        exit 0
-    }}
+$name = "{name}"
+$xmlString = $null
 
-    if (-not $xml) {{
-        "Kein lesbares XML in den Verbindungseigenschaften gefunden."
-    }} else {{
+# 1. Versuche klassische Methode via Get-VpnConnection
+$conns = @()
+$d = Get-VpnConnection -AllUserConnection -ErrorAction SilentlyContinue | Where-Object {{ $_.Name -match $name }}
+if ($d) {{ $conns += $d }}
+$u = Get-VpnConnection -ErrorAction SilentlyContinue | Where-Object {{ $_.Name -match $name }}
+if ($u) {{ $conns += $u }}
+
+if ($conns.Count -gt 0) {{
+    $conn = $conns[0]
+    if ($conn.EapConfigXmlStream.InnerXml) {{
+        $xmlString = $conn.EapConfigXmlStream.InnerXml
+    }}
+}}
+
+# 2. Versuche MDM WMI (für Device Tunnels & Always On)
+if (-not $xmlString) {{
+    $mdm = Get-CimInstance -Namespace "root\cimv2\mdm\dmmap" -ClassName "MDM_VPNv2_01" -ErrorAction SilentlyContinue | Where-Object {{ $_.InstanceID -match $name }}
+    if ($mdm -and $mdm.ProfileXML) {{
+        $xmlString = $mdm.ProfileXML
+    }}
+}}
+
+if (-not $xmlString) {{
+    "Keine VPN-Verbindung oder MDM-Profil mit dem Namen '*$name*' gefunden, oder kein XML vorhanden. (Hinweis: Device Tunnels erfordern Admin-Rechte beim Auslesen!)"
+}} else {{
+    try {{
+        $xmlString = $xmlString -replace '&(?!(amp|apos|quot|lt|gt);)', '&amp;'
+        [xml]$xml = $xmlString
         $StringWriter = New-Object System.IO.StringWriter
         $XmlWriter = New-Object System.Xml.XmlTextWriter $StringWriter
         $XmlWriter.Formatting = 'Indented'
         $xml.Save($XmlWriter)
         $StringWriter.ToString()
+    }} catch {{
+        "Error parsing XML: $_"
     }}
 }}
+
 "#);
 
     let output = Command::new("powershell")
