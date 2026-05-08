@@ -15,28 +15,25 @@ pub fn generate_device_profile_xml(config: &VpnConfig) -> String {
         }
     }
 
-    let routing_mode = "SplitTunnel";
-
     format!(r#"
 <VPNProfile>
   <DnsSuffix>{dns_suffix}</DnsSuffix>
   <NativeProfile>
     <Servers>{vpn_server_address}</Servers>
+    <RoutingPolicyType>SplitTunnel</RoutingPolicyType>
     <NativeProtocolType>IKEv2</NativeProtocolType>
     <Authentication>
       <MachineMethod>Certificate</MachineMethod>
     </Authentication>
-    <RoutingPolicyType>{routing_mode}</RoutingPolicyType>
   </NativeProfile>
-{routes_xml}
-  <DeviceTunnel>true</DeviceTunnel>
-  <RegisterDNS>true</RegisterDNS>
-  <AlwaysOn>{always_on}</AlwaysOn>
-  <TrustedNetworkDetection>{trusted_network}</TrustedNetworkDetection>
-  <DomainNameInformation>
+{routes_xml}  <DomainNameInformation>
     <DomainName>.{dns_suffix}</DomainName>
     <DnsServers>{dns_servers}</DnsServers> 
   </DomainNameInformation>
+  <AlwaysOn>{always_on}</AlwaysOn>
+  <DeviceTunnel>true</DeviceTunnel>
+  <RegisterDNS>true</RegisterDNS>
+  <TrustedNetworkDetection>{trusted_network}</TrustedNetworkDetection>
 </VPNProfile>"#,
         dns_suffix = config.dns_suffix,
         vpn_server_address = config.vpn_server_address,
@@ -492,7 +489,6 @@ pub fn generate_user_profile_xml(config: &VpnConfig) -> String {
 </EapHostConfig>"#, eap_server_names = config.eap_server_names, root_ca_hash = config.root_ca_hash, eku_xml = eku_xml);
 
     let routing_mode = if config.force_tunneling { "ForceTunnel" } else { "SplitTunnel" };
-    let disable_btn_xml = if config.disable_disconnect_button { "  <DisableDisconnectButton>true</DisableDisconnectButton>\n" } else { "" };
     let disable_route_xml = if config.disable_class_based_route { "    <DisableClassBasedDefaultRoute>true</DisableClassBasedDefaultRoute>\n" } else { "" };
     
     format!(r#"
@@ -500,6 +496,7 @@ pub fn generate_user_profile_xml(config: &VpnConfig) -> String {
   <DnsSuffix>{dns_suffix}</DnsSuffix>
   <NativeProfile>
     <Servers>{vpn_server_address}</Servers>
+    <RoutingPolicyType>{routing_mode}</RoutingPolicyType>
     <NativeProtocolType>{protocol}</NativeProtocolType>
     <Authentication>
       <UserMethod>Eap</UserMethod>
@@ -507,16 +504,14 @@ pub fn generate_user_profile_xml(config: &VpnConfig) -> String {
         <Configuration>{eap_settings}</Configuration>
       </Eap>
     </Authentication>
-    <RoutingPolicyType>{routing_mode}</RoutingPolicyType>
 {disable_route_xml}  </NativeProfile>
-{routes_xml}
-  <AlwaysOn>{always_on}</AlwaysOn>
-  <RememberCredentials>true</RememberCredentials>
-  <TrustedNetworkDetection>{trusted_network}</TrustedNetworkDetection>
-{disable_btn_xml}  <DomainNameInformation>
+{routes_xml}  <DomainNameInformation>
     <DomainName>.{dns_suffix}</DomainName>
     <DnsServers>{dns_servers}</DnsServers>
   </DomainNameInformation>
+  <RememberCredentials>true</RememberCredentials>
+  <AlwaysOn>{always_on}</AlwaysOn>
+  <TrustedNetworkDetection>{trusted_network}</TrustedNetworkDetection>
 </VPNProfile>"#,
         protocol = config.user_tunnel_protocol,
         always_on = if config.user_tunnel_always_on { "true" } else { "false" },
