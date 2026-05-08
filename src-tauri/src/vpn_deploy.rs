@@ -493,7 +493,7 @@ pub fn generate_user_profile_xml(config: &VpnConfig) -> String {
 
     let routing_mode = if config.force_tunneling { "ForceTunnel" } else { "SplitTunnel" };
     let disable_btn_xml = if config.disable_disconnect_button { "  <DisableDisconnectButton>true</DisableDisconnectButton>\n" } else { "" };
-    let disable_route_xml = if config.disable_class_based_route { "  <DisableClassBasedDefaultRoute>true</DisableClassBasedDefaultRoute>\n" } else { "" };
+    let disable_route_xml = if config.disable_class_based_route { "    <DisableClassBasedDefaultRoute>true</DisableClassBasedDefaultRoute>\n" } else { "" };
     
     format!(r#"
 <VPNProfile>
@@ -508,12 +508,12 @@ pub fn generate_user_profile_xml(config: &VpnConfig) -> String {
       </Eap>
     </Authentication>
     <RoutingPolicyType>{routing_mode}</RoutingPolicyType>
-  </NativeProfile>
+{disable_route_xml}  </NativeProfile>
 {routes_xml}
   <AlwaysOn>{always_on}</AlwaysOn>
   <RememberCredentials>true</RememberCredentials>
   <TrustedNetworkDetection>{trusted_network}</TrustedNetworkDetection>
-{disable_btn_xml}{disable_route_xml}  <DomainNameInformation>
+{disable_btn_xml}  <DomainNameInformation>
     <DomainName>.{dns_suffix}</DomainName>
     <DnsServers>{dns_servers}</DnsServers>
   </DomainNameInformation>

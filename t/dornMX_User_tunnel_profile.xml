@@ -1,0 +1,73 @@
+
+<VPNProfile>
+  <DnsSuffix>system.loc</DnsSuffix>
+  <NativeProfile>
+    <Servers>vpn.dornmx.de</Servers>
+    <NativeProtocolType>SSTP</NativeProtocolType>
+    <Authentication>
+      <UserMethod>Eap</UserMethod>
+      <Eap>
+        <Configuration>
+&lt;EapHostConfig xmlns=&quot;http://www.microsoft.com/provisioning/EapHostConfig&quot;&gt;
+  &lt;EapMethod&gt;
+    &lt;Type xmlns=&quot;http://www.microsoft.com/provisioning/EapCommon&quot;&gt;13&lt;/Type&gt;
+    &lt;VendorId xmlns=&quot;http://www.microsoft.com/provisioning/EapCommon&quot;&gt;0&lt;/VendorId&gt;
+    &lt;VendorType xmlns=&quot;http://www.microsoft.com/provisioning/EapCommon&quot;&gt;0&lt;/VendorType&gt;
+    &lt;AuthorId xmlns=&quot;http://www.microsoft.com/provisioning/EapCommon&quot;&gt;0&lt;/AuthorId&gt;
+  &lt;/EapMethod&gt;
+  &lt;Config xmlns=&quot;http://www.microsoft.com/provisioning/EapHostConfig&quot;&gt;
+    &lt;Eap xmlns=&quot;http://www.microsoft.com/provisioning/BaseEapConnectionPropertiesV1&quot;&gt;
+      &lt;Type&gt;13&lt;/Type&gt;
+      &lt;EapType xmlns=&quot;http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV1&quot;&gt;
+        &lt;CredentialsSource&gt;
+          &lt;CertificateStore&gt;
+            &lt;SimpleCertSelection&gt;true&lt;/SimpleCertSelection&gt;
+          &lt;/CertificateStore&gt;
+        &lt;/CredentialsSource&gt;
+        &lt;ServerValidation&gt;
+          &lt;DisableUserPromptForServerValidation&gt;true&lt;/DisableUserPromptForServerValidation&gt;
+          &lt;ServerNames&gt;vpn.dornmx.de&lt;/ServerNames&gt;
+          &lt;TrustedRootCA&gt;68b545d69b6f49dd8614cf1b3470d38575b22db8&lt;/TrustedRootCA&gt;
+        &lt;/ServerValidation&gt;
+        &lt;DifferentUsername&gt;false&lt;/DifferentUsername&gt;
+        &lt;PerformServerValidation xmlns=&quot;http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2&quot;&gt;true&lt;/PerformServerValidation&gt;
+        &lt;AcceptServerName xmlns=&quot;http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2&quot;&gt;true&lt;/AcceptServerName&gt;
+        &lt;TLSExtensions xmlns=&quot;http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2&quot;&gt;
+          &lt;FilteringInfo xmlns=&quot;http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV3&quot;&gt;
+            &lt;EKUMapping&gt;
+              &lt;EKUMap&gt;
+                &lt;EKUName&gt;dornmx_vpn&lt;/EKUName&gt;
+                &lt;EKUOID&gt;1.3.6.1.4.1.311.21.8.8940219.13077989.412064.413517.8235707.255.15911128.8265948&lt;/EKUOID&gt;
+              &lt;/EKUMap&gt;
+            &lt;/EKUMapping&gt;
+            &lt;ClientAuthEKUList Enabled=&quot;true&quot;&gt;
+              &lt;EKUMapInList&gt;
+                &lt;EKUName&gt;dornmx_vpn&lt;/EKUName&gt;
+              &lt;/EKUMapInList&gt;
+            &lt;/ClientAuthEKUList&gt;
+          &lt;/FilteringInfo&gt;
+        &lt;/TLSExtensions&gt;
+      &lt;/EapType&gt;
+    &lt;/Eap&gt;
+  &lt;/Config&gt;
+&lt;/EapHostConfig&gt;</Configuration>
+      </Eap>
+    </Authentication>
+    <RoutingPolicyType>SplitTunnel</RoutingPolicyType>
+  </NativeProfile>
+  <Route>
+    <Address>192.168.148.0</Address><PrefixSize>24</PrefixSize>
+  </Route>
+  <Route>
+    <Address>172.16.148.0</Address><PrefixSize>24</PrefixSize>
+  </Route>
+
+  <AlwaysOn>true</AlwaysOn>
+  <RememberCredentials>true</RememberCredentials>
+  <TrustedNetworkDetection>system.loc</TrustedNetworkDetection>
+  <DisableClassBasedDefaultRoute>true</DisableClassBasedDefaultRoute>
+  <DomainNameInformation>
+    <DomainName>.system.loc</DomainName>
+    <DnsServers>192.168.148.20,172.16.148.4</DnsServers>
+  </DomainNameInformation>
+</VPNProfile>

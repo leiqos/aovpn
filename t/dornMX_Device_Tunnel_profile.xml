@@ -1,0 +1,27 @@
+
+<VPNProfile>
+  <DnsSuffix>system.loc</DnsSuffix>
+  <NativeProfile>
+    <Servers>vpn.dornmx.de</Servers>
+    <NativeProtocolType>IKEv2</NativeProtocolType>
+    <Authentication>
+      <MachineMethod>Certificate</MachineMethod>
+    </Authentication>
+    <RoutingPolicyType>SplitTunnel</RoutingPolicyType>
+  </NativeProfile>
+  <Route>
+    <Address>192.168.148.20</Address><PrefixSize>32</PrefixSize>
+  </Route>
+  <Route>
+    <Address>172.16.148.4</Address><PrefixSize>32</PrefixSize>
+  </Route>
+
+  <DeviceTunnel>true</DeviceTunnel>
+  <RegisterDNS>true</RegisterDNS>
+  <AlwaysOn>true</AlwaysOn>
+  <TrustedNetworkDetection>system.loc</TrustedNetworkDetection>
+  <DomainNameInformation>
+    <DomainName>.system.loc</DomainName>
+    <DnsServers>192.168.148.20,172.16.148.4</DnsServers> 
+  </DomainNameInformation>
+</VPNProfile>
