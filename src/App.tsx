@@ -35,8 +35,9 @@ interface LogEntry {
 const en = {
   title: "AOVPN",
   subtitle: "Enterprise Management Console",
-  btnDeploy: "Run Deployment",
-  btnDeployUserAll: "Deploy User Tunnel (All)",
+  btnDeploy: "Full Deploy",
+  btnDeployUserAll: "User (All)",
+  btnDeployDevice: "Device Only",
   btnDeploying: "Deploying...",
   clear: "Clear Log",
   coreParams: "1. Core & Network",
@@ -123,8 +124,9 @@ const en = {
 const de = {
   title: "AOVPN",
   subtitle: "Enterprise Management Konsole",
-  btnDeploy: "Deployment Starten",
-  btnDeployUserAll: "User Tunnel (Alle) Deployen",
+  btnDeploy: "Alles Deployen",
+  btnDeployUserAll: "User (Alle)",
+  btnDeployDevice: "Nur Device",
   btnDeploying: "Wird Deployt...",
   clear: "Log Leeren",
   coreParams: "1. Kern-Netzwerk",
@@ -441,6 +443,35 @@ function App() {
     }
   };
 
+  const deployDeviceOnly = async () => {
+    if (isDeploying) return;
+
+    const missing: string[] = [];
+    if (!config.companyPrefix.trim()) missing.push(T.prefixLabel);
+    if (!config.vpnServerAddress.trim()) missing.push(T.serverLabel);
+    if (!config.dnsSuffix.trim()) missing.push(T.dnsSuffixLabel);
+    if (missing.length > 0) {
+      window.alert(`${lang === 'de' ? 'Fehlende Pflichtfelder' : 'Missing required fields'}:\n\n• ${missing.join('\n• ')}`);
+      return;
+    }
+
+    setIsDeploying(true);
+    setLogs([]);
+    addLog('SYSTEM', 'Starting Device Tunnel Deployment...', false);
+
+    try {
+      await callEndpoint('deploy_device_tunnel', { config });
+      if (config.enableTaskSchedulerTrigger) {
+        await callEndpoint('enable_task_scheduler_trigger', { config });
+      }
+      addLog('SYSTEM', '✅ Device Tunnel Deployment completed successfully!', false);
+    } catch (e) {
+      addLog('SYSTEM', '❌ Deployment halted due to errors.', true);
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   const exportConfig = async () => {
     try {
       const { save } = await import('@tauri-apps/plugin-dialog');
@@ -580,10 +611,13 @@ function App() {
             <button className="btn btn-outline" style={{ width: 'auto', padding: '0.2rem 0.4rem', fontSize: '0.75rem' }} onClick={toggleLang}>
               {lang === 'de' ? '🇺🇸 EN' : '🇩🇪 DE'}
             </button>
-            <button className="btn btn-outline" disabled={isDeploying} onClick={deployUserAll} style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: '#58a6ff', borderColor: '#58a6ff' }}>
+            <button className="btn btn-outline" disabled={isDeploying} onClick={deployDeviceOnly} style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.85rem', color: '#58a6ff', borderColor: '#58a6ff' }}>
+              💻 {T.btnDeployDevice}
+            </button>
+            <button className="btn btn-outline" disabled={isDeploying} onClick={deployUserAll} style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.85rem', color: '#58a6ff', borderColor: '#58a6ff' }}>
               👥 {T.btnDeployUserAll}
             </button>
-            <button className="btn btn-success" disabled={isDeploying} onClick={deployAll} style={{ width: '260px', padding: '0.4rem 0.8rem', fontSize: '0.9rem', justifyContent: 'center' }}>
+            <button className="btn btn-success" disabled={isDeploying} onClick={deployAll} style={{ width: 'auto', padding: '0.3rem 0.8rem', fontSize: '0.85rem', justifyContent: 'center' }}>
               🚀 {isDeploying ? T.btnDeploying : T.btnDeploy}
             </button>
           </div>
