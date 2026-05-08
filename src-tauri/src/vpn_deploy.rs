@@ -4,10 +4,9 @@ use std::os::windows::process::CommandExt;
 use tauri::command;
 
 #[command]
-pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
+pub fn generate_device_profile_xml(config: &VpnConfig) -> String {
     let mut routes_xml = String::new();
     for route in &config.device_routes {
-        // e.g. "192.168.1.0/24"
         if let Some((addr, prefix)) = route.split_once('/') {
             routes_xml.push_str(&format!(
                 "  <Route>\n    <Address>{}</Address><PrefixSize>{}</PrefixSize>\n  </Route>\n",
@@ -16,11 +15,9 @@ pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
         }
     }
 
-    // Microsoft Best Practice: Device Tunnels must always use SplitTunnel.
-    // The force_tunneling flag from config should only apply to User Tunnels.
     let routing_mode = "SplitTunnel";
 
-    let profile_xml = format!(r#"
+    format!(r#"
 <VPNProfile>
   <DnsSuffix>{dns_suffix}</DnsSuffix>
   <NativeProfile>
@@ -46,7 +43,12 @@ pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
         trusted_network = config.trusted_network,
         dns_servers = config.dns_servers,
         always_on = if config.device_tunnel_always_on { "true" } else { "false" },
-    );
+    )
+}
+
+#[command]
+pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
+    let profile_xml = generate_device_profile_xml(&config);
 
     let profile_name = format!("{} Device Tunnel", config.company_prefix);
 
@@ -426,7 +428,7 @@ pub async fn set_sstp_revocation(disable: bool) -> Result<String, String> {
 }
 
 #[command]
-pub async fn deploy_user_tunnel(config: VpnConfig) -> Result<String, String> {
+pub fn generate_user_profile_xml(config: &VpnConfig) -> String {
     let mut routes_xml = String::new();
     for route in &config.user_routes {
         if let Some((addr, prefix)) = route.split_once('/') {
@@ -493,7 +495,7 @@ pub async fn deploy_user_tunnel(config: VpnConfig) -> Result<String, String> {
     let disable_btn_xml = if config.disable_disconnect_button { "  <DisableDisconnectButton>true</DisableDisconnectButton>\n" } else { "" };
     let disable_route_xml = if config.disable_class_based_route { "  <DisableClassBasedDefaultRoute>true</DisableClassBasedDefaultRoute>\n" } else { "" };
     
-    let profile_xml = format!(r#"
+    format!(r#"
 <VPNProfile>
   <DnsSuffix>{dns_suffix}</DnsSuffix>
   <NativeProfile>
@@ -523,7 +525,12 @@ pub async fn deploy_user_tunnel(config: VpnConfig) -> Result<String, String> {
         trusted_network = config.trusted_network,
         dns_servers = config.dns_servers,
         eap_settings = eap_settings.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
-    );
+    )
+}
+
+#[command]
+pub async fn deploy_user_tunnel(config: VpnConfig) -> Result<String, String> {
+    let profile_xml = generate_user_profile_xml(&config);
 
     let profile_name = format!("{} User Tunnel", config.company_prefix);
 
@@ -776,11 +783,12 @@ exit 1
 
 #[command]
 pub async fn write_file_to_path(path: String, content: String) -> Result<String, String> {
-    if !path.to_lowercase().ends_with(".json") {
-        return Err("Only .json files are allowed for export.".to_string());
+    let lower = path.to_lowercase();
+    if !lower.ends_with(".json") && !lower.ends_with(".xml") {
+        return Err("Only .json and .xml files are allowed for export.".to_string());
     }
-    std::fs::write(&path, content).map_err(|e| format!("Failed to write config: {}", e))?;
-    Ok(format!("Configuration successfully exported to: {}", path))
+    std::fs::write(&path, content).map_err(|e| format!("Failed to write file: {}", e))?;
+    Ok(format!("File successfully saved to: {}", path))
 }
 
 #[command]

@@ -477,7 +477,7 @@ function App() {
     if (!vpnName) return;
 
     try {
-      const xml = await callEndpoint('get_vpn_xml', { name: vpnName });
+      const xml = await callEndpoint('get_vpn_xml', { name: vpnName, config });
       if (!xml || xml.includes("Fehler:") || xml.includes("Keine VPN-Verbindung")) {
         return;
       }
