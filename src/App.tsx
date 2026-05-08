@@ -472,6 +472,31 @@ function App() {
     }
   };
 
+  const extractXmlAndSave = async () => {
+    const vpnName = window.prompt(T.promptVpnName, config.companyPrefix);
+    if (!vpnName) return;
+
+    try {
+      const xml = await callEndpoint('get_vpn_xml', { name: vpnName });
+      if (!xml || xml.includes("Fehler:") || xml.includes("Keine VPN-Verbindung")) {
+        return;
+      }
+
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const filePath = await save({
+        filters: [{ name: 'XML Profile', extensions: ['xml'] }],
+        defaultPath: `${vpnName.replace(/\s+/g, '_')}_profile.xml`
+      });
+
+      if (filePath) {
+        await callEndpoint('write_file_to_path', { path: filePath, content: xml });
+        addLog('SYSTEM', `XML successfully saved to ${filePath}`, false);
+      }
+    } catch (e) {
+      // Errors are already logged by callEndpoint
+    }
+  };
+
   const exportConfig = async () => {
     try {
       const { save } = await import('@tauri-apps/plugin-dialog');
@@ -799,12 +824,7 @@ function App() {
                         <button className="btn btn-outline" style={{ padding: '0.2rem', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }} onClick={() => callEndpoint('check_ports', { server: config.vpnServerAddress })}>{T.checkPorts}</button>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '0.4rem' }}>
-                        <button className="btn btn-outline" style={{ padding: '0.2rem', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }} onClick={() => {
-                          const vpnName = window.prompt(T.promptVpnName, config.companyPrefix);
-                          if (vpnName) {
-                            callEndpoint('get_vpn_xml', { name: vpnName });
-                          }
-                        }}>{T.getXml}</button>
+                        <button className="btn btn-outline" style={{ padding: '0.2rem', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }} onClick={extractXmlAndSave}>{T.getXml}</button>
                         <button className="btn btn-danger" style={{ padding: '0.2rem', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }} onClick={() => callEndpoint('restart_vpn_service')}>{T.restartService}</button>
                       </div>
                     </div>
