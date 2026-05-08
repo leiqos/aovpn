@@ -582,6 +582,7 @@ function App() {
             <h2 style={{ margin: 0, fontSize: '1.2rem', paddingRight: '1rem', borderRight: '1px solid #30363d', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <img src="/app-icon.png" alt="logo" style={{ width: '24px', height: '24px' }} />
               {T.title}
+              <span style={{ fontSize: '0.65rem', color: '#8b949e', marginLeft: '0.2rem', padding: '0.1rem 0.3rem', border: '1px solid #30363d', borderRadius: '4px', background: '#161b22' }}>v1.7</span>
             </h2>
             <div style={{ display: 'flex', gap: '0.2rem' }}>
               <button
