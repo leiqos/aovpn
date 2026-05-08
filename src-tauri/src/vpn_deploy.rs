@@ -16,7 +16,9 @@ pub async fn deploy_device_tunnel(config: VpnConfig) -> Result<String, String> {
         }
     }
 
-    let routing_mode = if config.force_tunneling { "ForceTunnel" } else { "SplitTunnel" };
+    // Microsoft Best Practice: Device Tunnels must always use SplitTunnel.
+    // The force_tunneling flag from config should only apply to User Tunnels.
+    let routing_mode = "SplitTunnel";
 
     let profile_xml = format!(r#"
 <VPNProfile>
